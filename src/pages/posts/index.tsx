@@ -2,7 +2,7 @@ import { api } from '@/utils/api'
 import { inter } from '@/utils/font'
 import { Icon } from '@iconify/react'
 
-import { useSetAtom } from 'jotai'
+import { useAtom, useSetAtom } from 'jotai'
 
 import CountUp from 'react-countup'
 
@@ -10,31 +10,32 @@ import Image from 'next/image'
 
 import { useSprings, animated as a, useTransition } from '@react-spring/web'
 import { E621Post } from '@/e621'
-import { loadProgressAtom } from '@/utils/atoms'
+import {
+  loadProgressAtom,
+  postAtom,
+  postSizeAtom,
+  postSpringPropsAtom,
+} from '@/utils/atoms'
 import { createRef, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 
 function Posts() {
-  const posts = api.posts.useQuery({})
+  const posts = api.posts.useQuery(
+    {},
+    {
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchInterval: false,
+    },
+  )
 
   const router = useRouter()
 
+  // Get the route query (aka after the ? in the url)
+  const { query } = router.query
+
   const progress = useSetAtom(loadProgressAtom)
-
-  const [hovered, setHovered] = useState(-1)
-
-  const viewTransition = useTransition(hovered, {
-    from: {
-      opacity: 0,
-    },
-    enter: {
-      opacity: 1,
-    },
-    leave: {
-      opacity: 0,
-    },
-  })
-
   const [springs, set] = useSprings(
     posts.data ? posts.data.length : 0,
     (i) => ({
@@ -49,20 +50,41 @@ function Posts() {
       },
     }),
   )
-  useEffect(() => {
-    set((i) => ({
-      opacity: 1,
-      scale: 1,
-      delay: i * 50,
-    }))
-  }, [posts.data])
+
+  const [hovered, setHovered] = useState(-1)
+  // useEffect(() => {
+  //   set((i) => ({
+  //     opacity: 1,
+  //     scale: 1,
+  //     delay: i * 50,
+  //   }))
+  // }, [posts.data])
+
+  const [postA, setPostAtom] = useAtom(postAtom)
+  const [postSize, setPostSize] = useAtom(postSizeAtom)
+  const [postSpringProps, setPostSpringProps] = useAtom(postSpringPropsAtom)
   return (
     <>
-      <div className='gap-y-12 grid portrait:grid-cols-2 min-[500px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 grid-cols-7 left-0 right-0 my-4 w-full justify-center items-center justify-items-center'>
+      <button
+        className='bg-gray-800/50 backdrop-blur-lg p-2 top-14 left-2 rounded-xl fixed'
+        onClick={(e) => {
+          posts.refetch()
+        }}>
+        <Icon
+          className='text-gray-300'
+          icon='fontisto:spinner-rotate-forward'
+        />
+      </button>
+      <div className='gap-y-14 grid portrait:grid-cols-2 min-[500px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 grid-cols-7 left-0 right-0 my-4 w-full justify-center items-center justify-items-center'>
         {posts.data &&
           springs.map((props, i, p) => {
             if (!posts.data) return <></>
             const post = posts.data[i] as E621Post
+            if (postA && post.id === postA.id) {
+              props.opacity.start(0)
+              props.scale.start(0.9)
+              return <></>
+            }
             const colorValue = (post.score.up % post.score.down) * 255
             const ref = createRef<HTMLImageElement>()
             return (
@@ -77,6 +99,8 @@ function Posts() {
                   setHovered(-1)
                 }}
                 onClick={() => {
+                  progress((p) => 0)
+                  setPostAtom(post)
                   props.opacity.start(0, {
                     config: {
                       friction: 26,
@@ -87,10 +111,15 @@ function Posts() {
                       friction: 26,
                     },
                     onRest: () => {
-                      progress((p) => 0)
                       router.push(`/posts/${post.id}`)
                     },
                   })
+
+                  setPostSize({
+                    width: 0,
+                    height: 0,
+                  })
+
                   p.map((p) => {
                     if (p === props) return
                     p.opacity.start(0, {
@@ -103,6 +132,8 @@ function Posts() {
                 style={{
                   //border: `2px solid rgba(${colorValue}, ${colorValue}, 0, 1)`,
                   ...props,
+                  width: post.preview.width + 20,
+                  height: post.preview.height,
                 }}
                 ref={ref}
                 className={`bg-gray-900 rounded-lg`}>
@@ -124,11 +155,17 @@ function Posts() {
                     <Image
                       src={post.preview.url}
                       className='rounded-lg'
+                      style={{
+                        width: post.preview.width + 20,
+                        maxHeight: 200,
+                      }}
                       onLoadingComplete={() => {
                         progress((prev) => {
                           if (prev >= 15) return 100
                           return prev + 1
                         })
+                        props.scale.start(1)
+                        props.opacity.start(1)
                       }}
                       alt=''
                       width={post.preview.width + 20}

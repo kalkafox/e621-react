@@ -1,8 +1,11 @@
 import { api } from '@/utils/api'
-import { loadProgressAtom } from '@/utils/atoms'
+import {
+  loadProgressAtom,
+  postSizeAtom,
+  postAtom as postA,
+} from '@/utils/atoms'
 import { useSpring, animated as a } from '@react-spring/web'
-import { readFile } from 'fs'
-import { useSetAtom } from 'jotai'
+import { useAtom, useSetAtom } from 'jotai'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
@@ -14,72 +17,30 @@ function PostComponent() {
   const post = api.post.useQuery({ id: parseInt(id as string) })
   const ref = useRef<HTMLVideoElement>(null)
   const setLoadProgress = useSetAtom(loadProgressAtom)
+  const setPostSize = useSetAtom(postSizeAtom)
 
-  const [postSpring, setPostSpring] = useSpring(() => ({
-    opacity: 0,
-    scale: 0.9,
-    config: {
-      friction: 25,
-    },
-  }))
+  const [postAtom, setPostAtom] = useAtom(postA)
 
   useEffect(() => {
-    if (ref.current) {
-      if (post.data?.file.ext === 'webm') {
-        setLoadProgress(100)
-        setPostSpring.start({
-          opacity: 1,
-          scale: 1,
-        })
-      }
+    if (post.data?.tags.artist?.includes('taga')) {
+      router.push('/posts')
+      return
     }
-  }, [post.data?.file.ext, setLoadProgress])
+    // if (ref.current) {
+    //   if (post.data?.file.ext === 'webm') {
+    //     setLoadProgress(100)
+    //     setPostSpring.start({
+    //       opacity: 1,
+    //       scale: 1,
+    //     })
+    //   }
+    // }
+    if (post.data) {
+      setPostAtom(post.data)
+    }
+  }, [post.data, setLoadProgress, setPostAtom, router])
 
-  return (
-    <a.div
-      style={postSpring}
-      className='my-4 grid justify-center overflow-hidden'>
-      {post.data && post.data.file.ext === 'webm' ? (
-        <video
-          ref={ref}
-          width={post.data.file.width + 20}
-          height={post.data.file.height + 20}
-          className='rounded-lg'
-          autoPlay
-          controls
-          muted>
-          {post.data.file.ext === 'webm' ? (
-            <source src={post.data.file.url} type='video/webm' />
-          ) : (
-            <source src={post.data.file.url} type='video/mp4' />
-          )}
-        </video>
-      ) : (
-        post.data && (
-          <Image
-            width={post.data?.file.width - 100}
-            height={post.data?.file.height - 100}
-            alt={post.data?.tags.general.join(' ')}
-            onLoadingComplete={() => {
-              setLoadProgress(100)
-              setPostSpring.start({
-                opacity: 1,
-                scale: 1,
-              })
-            }}
-            src={post.data?.file.url as string}
-          />
-        )
-      )}
-      <button
-        onClick={() => {
-          setLoadProgress(0)
-          router.push('/posts')
-        }}>
-        Return back
-      </button>
-    </a.div>
-  )
+  return <></>
 }
 
 export default PostComponent

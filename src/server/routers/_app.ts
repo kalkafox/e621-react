@@ -46,7 +46,8 @@ export const appRouter = router({
     )
     .query(async ({ input }) => {
       const res = await fetch(
-        'https://e621.net/posts.json?tags=order:score+m/m+-female&limit=' + 25,
+        'https://e621.net/posts.json?tags=order:random+m/m+-female+-taga&limit=' +
+          25,
         {
           headers: {
             'User-Agent': 'e621-trpc/1.0 (by @kalkaio)',
@@ -55,6 +56,14 @@ export const appRouter = router({
       )
       if (!res.ok) throw new Error('failed to fetch posts' + res.statusText)
       const json = (await res.json()) as { posts: E621Post[] }
+
+      json.posts.forEach((post) => {
+        // Check if the post has a url, or if all of them are null
+        if (!post.file || !post.file.url || !post.sample.url) {
+          // Delete the post from the array
+          json.posts.splice(json.posts.indexOf(post), 1)
+        }
+      })
 
       if (
         typeof json === 'object' &&

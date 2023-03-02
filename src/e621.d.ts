@@ -22,15 +22,15 @@ export interface E621Post {
     url: string
   }
   tags: {
-    general: T
-    species: T
-    character: T
-    artist: T
-    invalid: T
-    lore: T
-    meta: T
+    general: string[]
+    species: string[]
+    character: string[]
+    artist: string[]
+    invalid: string[]
+    lore: string[]
+    meta: string[]
   }
-  locked_tags: T
+  locked_tags: string[]
   change_seq: number
   flags: {
     pending: boolean
@@ -42,8 +42,8 @@ export interface E621Post {
   }
   rating: 's' | 'q' | 'e'
   fav_count: number
-  sources: T
-  pools: T
+  sources: string[]
+  pools: number[]
   relationships: {
     parent_id: number
     has_children: boolean
