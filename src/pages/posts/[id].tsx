@@ -27,8 +27,14 @@ function PostComponent() {
       return
     }
     const interval = setInterval(() => {
-      setLoadProgress((prev) => prev + 10)
-      clearInterval(interval)
+      setLoadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(interval)
+          return 90
+        } else {
+          return prev + 5
+        }
+      })
     }, 100)
     // if (ref.current) {
     //   if (post.data?.file.ext === 'webm') {
