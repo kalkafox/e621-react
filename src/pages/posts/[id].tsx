@@ -28,9 +28,9 @@ function PostComponent() {
     }
     const interval = setInterval(() => {
       setLoadProgress((prev) => {
-        if (prev >= 90) {
+        if (prev >= 100) {
           clearInterval(interval)
-          return 90
+          return 100
         } else {
           return prev + 5
         }

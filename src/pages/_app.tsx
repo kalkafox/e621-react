@@ -165,6 +165,7 @@ function App({ Component, pageProps }: AppProps) {
                 ) : (
                   post && (
                     <Image
+                      unoptimized
                       width={postSize.width - 100}
                       height={postSize.height - 100}
                       alt={post.tags.general.join(' ')}
