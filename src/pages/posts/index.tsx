@@ -35,7 +35,7 @@ function Posts() {
   // Get the route query (aka after the ? in the url)
   const { query } = router.query
 
-  const progress = useSetAtom(loadProgressAtom)
+  const [progress, setProgress] = useAtom(loadProgressAtom)
   const [springs, set] = useSprings(
     posts.data ? posts.data.length : 0,
     (i) => ({
@@ -99,29 +99,23 @@ function Posts() {
                   setHovered(-1)
                 }}
                 onClick={() => {
-                  progress((p) => 0)
-                  setPostAtom(post)
+                  setProgress((p) => 0)
                   props.opacity.start(0, {
                     config: {
                       friction: 26,
+                    },
+                    onRest: () => {
+                      setPostAtom(null)
+                      router.push(`/posts/${post.id}`)
                     },
                   })
                   props.scale.start(1.8, {
                     config: {
                       friction: 26,
                     },
-                    onRest: () => {
-                      router.push(`/posts/${post.id}`)
-                    },
                   })
 
-                  setPostSize({
-                    width: 0,
-                    height: 0,
-                  })
-
-                  p.map((p) => {
-                    if (p === props) return
+                  p.forEach((p) => {
                     p.opacity.start(0, {
                       config: {
                         friction: 26,
@@ -160,10 +154,12 @@ function Posts() {
                         maxHeight: 200,
                       }}
                       onLoadingComplete={() => {
-                        progress((prev) => {
+                        setProgress((prev) => {
                           if (prev >= 15) return 100
                           return prev + 1
                         })
+                        props.scale.set(0.9)
+                        props.opacity.set(0)
                         props.scale.start(1)
                         props.opacity.start(1)
                       }}

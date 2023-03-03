@@ -65,21 +65,24 @@ function App({ Component, pageProps }: AppProps) {
       width: `${progress}%`,
       onChange: (props) => {
         if (props.value.width === '100%') {
-          setTimeout(() => {
-            setLoadSpring.start({
-              opacity: 0,
-            })
-            setLoadBgSpring.start({
-              opacity: 0,
-            })
-          }, 1000)
+          setLoadSpring.start({
+            opacity: 0,
+            delay: 500,
+          })
+          setLoadBgSpring.start({
+            opacity: 0,
+            delay: 1000,
+          })
         }
       },
     })
   }, [progress, setLoadSpring, setLoadBgSpring])
 
   useEffect(() => {
-    if (!post) return
+    if (!post) {
+      setPostSpring.start({ opacity: 0 })
+      return
+    }
     if (post.tags.artist.includes('taga')) {
       router.push('/posts')
       return
@@ -111,6 +114,7 @@ function App({ Component, pageProps }: AppProps) {
               <button
                 className='bg-gray-800/50 backdrop-blur-lg p-2 top-4 left-2 rounded-xl absolute'
                 onClick={(e) => {
+                  // TODO: Make the back button work with the back button on the element
                   setProgress(0)
                   setPostSpring.start({
                     scale: 0.5,
@@ -176,6 +180,7 @@ function App({ Component, pageProps }: AppProps) {
                         })
                       }}
                       src={post.file.url as string}
+                      priority
                     />
                   )
                 )}
