@@ -26,6 +26,10 @@ function PostComponent() {
       router.push('/posts')
       return
     }
+    const interval = setInterval(() => {
+      setLoadProgress((prev) => prev + 10)
+      clearInterval(interval)
+    }, 100)
     // if (ref.current) {
     //   if (post.data?.file.ext === 'webm') {
     //     setLoadProgress(100)
@@ -38,7 +42,10 @@ function PostComponent() {
     if (post.data) {
       setPostAtom(post.data)
     }
-  }, [post.data, setLoadProgress, setPostAtom, router])
+    return () => {
+      clearInterval(interval)
+    }
+  }, [post.data, setLoadProgress, setPostAtom, router, setPostSize])
 
   return <></>
 }
